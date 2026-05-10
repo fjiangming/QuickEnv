@@ -1,0 +1,19 @@
+# =============================================================================
+# QuickEnv Profile: 自定义模板
+# 复制此文件为 custom.conf 并修改服务列表
+# =============================================================================
+
+# 可选服务（取消注释即可启用）:
+#   nginx          - Nginx 反向代理
+#   3x-ui          - 3x-ui 代理面板
+#   new-api        - New API 服务
+#   sub2api        - Sub2API 订阅转换
+#   cli-proxy-api  - CLI Proxy API
+#   syncthing      - Syncthing 文件同步
+#   backup         - 自动备份服务（依赖 syncthing）
+
+SERVICES=(
+    nginx
+    new-api
+    # 按需添加其他服务
+)

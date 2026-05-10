@@ -1,0 +1,10 @@
+services:
+  cli-proxy-api:
+    image: eceasy/cli-proxy-api:latest
+    container_name: cli-proxy-api
+    network_mode: host
+    volumes:
+      - ./config.yaml:/CLIProxyAPI/config.yaml
+      - ./auths:/root/.cli-proxy-api
+      - ./logs:/CLIProxyAPI/logs
+    restart: unless-stopped

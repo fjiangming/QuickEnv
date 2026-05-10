@@ -1,0 +1,27 @@
+# ======================== 敏感文件 ========================
+# 绝对不能提交到 Git 的文件
+*.env
+!*.env.template
+config.yaml
+!config.yaml.template
+auths/
+
+# SSL 证书
+*.pem
+*.key
+*.crt
+
+# ======================== 运行时文件 ========================
+logs/
+*.log
+*.tar.gz
+postgres_data/
+redis_data/
+backups/
+
+# ======================== 系统文件 ========================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~

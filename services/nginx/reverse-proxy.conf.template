@@ -1,0 +1,72 @@
+# =====================================================
+# 默认 server 块：拒绝所有未匹配的请求（直接 IP 访问、未知域名）
+# =====================================================
+server {
+    listen 80 default_server;
+    server_name _;
+
+    return 444;   # 直接关闭连接
+}
+
+# =====================================================
+# 处理 epointapi.fjmooo.cn 的请求，转发到 8080 端口
+# =====================================================
+server {
+    listen 80;
+    server_name epointapi.fjmooo.cn;
+
+    access_log /var/log/nginx/epointapi_access.log;
+    error_log /var/log/nginx/epointapi_error.log;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# =====================================================
+# 处理 epoint2api.fjmooo.cn 的请求，转发到 9000 端口
+# =====================================================
+server {
+    listen 80;
+    server_name epoint2api.fjmooo.cn;
+
+    client_max_body_size 100m;
+
+    underscores_in_headers on;
+
+    access_log /var/log/nginx/epoint2api_access.log;
+    error_log /var/log/nginx/epoint2api_error.log;
+
+    location / {
+        proxy_pass http://127.0.0.1:9000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# =====================================================
+# 处理 cpa.fjmooo.cn 的请求，转发到 8317 端口
+# =====================================================
+server {
+    listen 80;
+    server_name cpa.fjmooo.cn;
+
+    client_max_body_size 100m;
+    
+    access_log /var/log/nginx/cpa_access.log;
+    error_log /var/log/nginx/cpa_error.log;
+
+    location / {
+        proxy_pass http://127.0.0.1:8317;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  new-api:
+    image: calciumion/new-api:latest
+    container_name: new-api
+    ports:
+      - "3000:3000"
+    volumes:
+      - new-api-data:/data
+    environment:
+      - TZ=Asia/Shanghai
+    restart: always
+
+volumes:
+  new-api-data:
