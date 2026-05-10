@@ -1,6 +1,7 @@
 # ======================== 敏感文件 ========================
 # 绝对不能提交到 Git 的文件
 *.env
+!config.env
 !*.env.template
 config.yaml
 !config.yaml.template
