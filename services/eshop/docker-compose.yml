@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  dujiao-next-aio:
+    image: ghcr.io/fjiangming/eshop:latest
+    container_name: dujiao-aio
+    restart: always
+    ports:
+      - "${PORT_ESHOP:-2000}:80"
+    volumes:
+      - ./config.yml:/app/config.yml
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    depends_on:
+      - dujiao-db
+      - dujiao-redis
+
+  dujiao-db:
+    image: postgres:15-alpine
+    container_name: dujiao-db
+    restart: always
+    environment:
+      POSTGRES_USER: dujiao
+      POSTGRES_PASSWORD: ${ESHOP_PG_PASSWORD:-secret_password}
+      POSTGRES_DB: dujiao_db
+      TZ: Asia/Shanghai
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data
+    ports:
+      - "${PORT_ESHOP_PG:-2001}:5432"
+
+  dujiao-redis:
+    image: redis:7-alpine
+    container_name: dujiao-redis
+    restart: always
+    volumes:
+      - ./redis_data:/data
+    ports:
+      - "${PORT_ESHOP_REDIS:-2002}:6379"

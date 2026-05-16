@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# 全量自动备份脚本 - CLIProxyAPI + sub2api + 3x-ui + Nginx
+# 全量自动备份脚本 - CLIProxyAPI + sub2api + eshop + 3x-ui + Nginx
 # 用途：定时备份所有业务数据到 ~/syncthing/backups/，由 Syncthing 同步到本地
 # =============================================================================
 
@@ -16,6 +16,7 @@ fi
 BACKUP_ROOT="${BACKUP_ROOT:-$HOME/syncthing/backups}"
 CPA_DIR="${DEPLOY_CPA:-$HOME/cpa}"
 SUB2API_DIR="${DEPLOY_SUB2API:-$HOME/sub2api-deploy}"
+ESHOP_DIR="${DEPLOY_ESHOP:-$HOME/eshop}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR="$BACKUP_ROOT/$TIMESTAMP"
 RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-7}"
@@ -32,7 +33,7 @@ mkdir -p "$BACKUP_DIR"
 # -------------------------------------------------------
 # 1. CLIProxyAPI - 文件备份（无数据库）
 # -------------------------------------------------------
-log "[1/4] 备份 CLIProxyAPI..."
+log "[1/5] 备份 CLIProxyAPI..."
 CLI_BACKUP="$BACKUP_DIR/cpa"
 mkdir -p "$CLI_BACKUP"
 
@@ -52,12 +53,12 @@ if [ -f "$CPA_DIR/docker-compose.yml" ]; then
     log "  ✓ docker-compose.yml"
 fi
 
-log "[1/4] CLIProxyAPI 备份完成"
+log "[1/5] CLIProxyAPI 备份完成"
 
 # -------------------------------------------------------
 # 2. sub2api - PostgreSQL 导出 + 文件备份
 # -------------------------------------------------------
-log "[2/4] 备份 sub2api..."
+log "[2/5] 备份 sub2api..."
 SUB2API_BACKUP="$BACKUP_DIR/sub2api"
 mkdir -p "$SUB2API_BACKUP"
 
@@ -90,12 +91,51 @@ if [ -f "$SUB2API_DIR/docker-compose.yml" ]; then
     log "  ✓ docker-compose.yml"
 fi
 
-log "[2/4] sub2api 备份完成"
+log "[2/5] sub2api 备份完成"
 
 # -------------------------------------------------------
-# 3. 3x-ui - SQLite 数据库 + SSL 证书
+# 3. eshop (Dujiao-Next) - PostgreSQL 导出 + 配置 + 上传文件
 # -------------------------------------------------------
-log "[3/4] 备份 3x-ui..."
+log "[3/5] 备份 eshop (Dujiao-Next)..."
+ESHOP_BACKUP="$BACKUP_DIR/eshop"
+mkdir -p "$ESHOP_BACKUP"
+
+if docker ps --format '{{.Names}}' | grep -q '^dujiao-db$'; then
+    docker exec dujiao-db pg_dump \
+        -U dujiao \
+        -d dujiao_db \
+        --no-owner \
+        --no-privileges \
+        --clean \
+        --if-exists \
+        > "$ESHOP_BACKUP/eshop-database.sql" 2>> "$LOG_FILE"
+    log "  ✓ PostgreSQL 数据库导出 ($(du -sh "$ESHOP_BACKUP/eshop-database.sql" | cut -f1))"
+else
+    log "  ⚠ dujiao-db 容器未运行，跳过数据库备份"
+fi
+
+if [ -f "$ESHOP_DIR/config.yml" ]; then
+    cp "$ESHOP_DIR/config.yml" "$ESHOP_BACKUP/config.yml"
+    log "  ✓ config.yml"
+fi
+
+if [ -f "$ESHOP_DIR/docker-compose.yml" ]; then
+    cp "$ESHOP_DIR/docker-compose.yml" "$ESHOP_BACKUP/docker-compose.yml"
+    log "  ✓ docker-compose.yml"
+fi
+
+if [ -d "$ESHOP_DIR/uploads" ]; then
+    cp -r "$ESHOP_DIR/uploads" "$ESHOP_BACKUP/uploads"
+    UPLOAD_COUNT=$(find "$ESHOP_BACKUP/uploads/" -type f 2>/dev/null | wc -l)
+    log "  ✓ uploads/ 目录 (${UPLOAD_COUNT} 个文件)"
+fi
+
+log "[3/5] eshop 备份完成"
+
+# -------------------------------------------------------
+# 4. 3x-ui - SQLite 数据库 + SSL 证书
+# -------------------------------------------------------
+log "[4/5] 备份 3x-ui..."
 XUI_BACKUP="$BACKUP_DIR/3x-ui"
 mkdir -p "$XUI_BACKUP"
 
@@ -109,12 +149,12 @@ if [ -d /etc/ssl/3x-ui ]; then
     log "  ✓ SSL 证书"
 fi
 
-log "[3/4] 3x-ui 备份完成"
+log "[4/5] 3x-ui 备份完成"
 
 # -------------------------------------------------------
-# 4. Nginx - 配置文件
+# 5. Nginx - 配置文件
 # -------------------------------------------------------
-log "[4/4] 备份 Nginx 配置..."
+log "[5/5] 备份 Nginx 配置..."
 NGINX_BACKUP="$BACKUP_DIR/nginx"
 mkdir -p "$NGINX_BACKUP"
 
@@ -128,10 +168,10 @@ if [ -d /etc/nginx/conf.d ]; then
     log "  ✓ conf.d/"
 fi
 
-log "[4/4] Nginx 备份完成"
+log "[5/5] Nginx 备份完成"
 
 # -------------------------------------------------------
-# 5. 压缩本次备份
+# 6. 压缩本次备份
 # -------------------------------------------------------
 log "压缩备份文件..."
 cd "$BACKUP_ROOT"
@@ -140,7 +180,7 @@ rm -rf "$BACKUP_DIR"
 log "✓ 已压缩为 ${TIMESTAMP}.tar.gz ($(du -sh "${TIMESTAMP}.tar.gz" | cut -f1))"
 
 # -------------------------------------------------------
-# 6. 清理过期备份
+# 7. 清理过期备份
 # -------------------------------------------------------
 DELETED_COUNT=$(find "$BACKUP_ROOT" -name "*.tar.gz" -mtime +$RETENTION_DAYS -print -delete | wc -l)
 if [ "$DELETED_COUNT" -gt 0 ]; then
@@ -148,7 +188,7 @@ if [ "$DELETED_COUNT" -gt 0 ]; then
 fi
 
 # -------------------------------------------------------
-# 7. 输出摘要
+# 8. 输出摘要
 # -------------------------------------------------------
 TOTAL_SIZE=$(du -sh "$BACKUP_ROOT" | cut -f1)
 BACKUP_COUNT=$(find "$BACKUP_ROOT" -name "*.tar.gz" | wc -l)

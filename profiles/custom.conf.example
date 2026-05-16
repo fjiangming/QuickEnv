@@ -9,8 +9,8 @@
 #   new-api        - New API 服务
 #   sub2api        - Sub2API 订阅转换
 #   cli-proxy-api  - CLI Proxy API
-#   syncthing      - Syncthing 文件同步
-#   backup         - 自动备份服务（依赖 syncthing）
+#   eshop          - Eshop 电商平台 (Dujiao-Next)
+#   syncthing      - Syncthing 文件同步 + 自动备份（备份服务已内置）
 
 SERVICES=(
     nginx
