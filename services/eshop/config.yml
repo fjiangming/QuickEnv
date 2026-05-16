@@ -34,8 +34,8 @@ user_jwt:
   remember_me_expire_hours: 168
 
 bootstrap:
-  default_admin_username: "admin@qq.com"
-  default_admin_password: "Fjm18762378220"
+  default_admin_username: "admin"
+  default_admin_password: "fjm18762378220"
 
 telegram_auth:
   enabled: false
